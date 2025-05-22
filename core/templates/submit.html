@@ -1,0 +1,99 @@
+{% load static %}
+{% csrf_token %}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Report Lost/Found ID</title>
+</head>
+<body>
+    <h2>Report Lost or Found ID</h2>
+    <form id="reportForm">
+      {% csrf_token %}
+      <input type="text" name="id_number" placeholder="ID Number" required><br>
+      <select name="status">
+        <option value="lost">Lost</option>
+        <option value="found">Found</option>
+      </select><br>
+      <input type="text" name="location" placeholder="Location" required><br>
+      <textarea name="description" placeholder="Description" required></textarea><br>
+      <button type="submit">Submit</button>
+    </form>
+    
+    <p id="message"></p>
+    
+    <h3>All Reports</h3>
+    <ul id="reportList"></ul>
+    
+
+    <script>
+        // Function to get CSRF token from cookies
+        function getCookie(name) {
+          let cookieValue = null;
+          if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+              const cookie = cookies[i].trim();
+              if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+              }
+            }
+          }
+          return cookieValue;
+        }
+      
+        const csrftoken = getCookie('csrftoken');
+      
+        // 🎯 fetch() happens here when form is submitted
+        document.getElementById('reportForm').addEventListener('submit', async function (e) {
+          e.preventDefault();
+      
+          const form = e.target;
+          const data = {
+            id_number: form.id_number.value,
+            status: form.status.value,
+            location: form.location.value,
+            description: form.description.value
+          };
+      
+          const response = await fetch('/api/ids/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrftoken  // ✅ required for Django security
+            },
+            body: JSON.stringify(data)
+          });
+      
+          const result = await response.json();
+          document.getElementById('message').textContent = response.ok
+            ? "Report submitted successfully!"
+            : `Error: ${JSON.stringify(result)}`;
+      
+          // Reload reports after a successful submission
+          if (response.ok) loadReports();
+        });
+      
+        // Load existing reports from the API
+        async function loadReports() {
+          const response = await fetch('/api/ids/');
+          const reports = await response.json();
+      
+          const list = document.getElementById('reportList');
+          list.innerHTML = '';
+      
+          reports.forEach(report => {
+            const item = document.createElement('li');
+            item.textContent = `${report.status.toUpperCase()} - ID: ${report.id_number} @ ${report.location} (${report.description})`;
+            list.appendChild(item);
+          });
+        }
+      
+        // Load reports when page first loads
+        loadReports();
+      </script>
+      
+    
+
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Search Lost & Found IDs</title>
+</head>
+<body>
+  
+<h2>Search for Your Lost ID</h2>
+
+<form id="searchForm">
+  <input type="text" id="id_number" placeholder="Enter your ID number" required>
+  <button type="submit">Search</button>
+</form>
+
+<div id="result"></div>
+
+<script>
+  document.getElementById('searchForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const idNumber = document.getElementById('id_number').value;
+
+    fetch(`/ids/search/?id_number=${idNumber}`)
+      .then(res => res.json())
+      .then(data => {
+        const resultDiv = document.getElementById('result');
+        if (data.length > 0) {
+          resultDiv.innerHTML = `<pre>${JSON.stringify(data[0], null, 2)}</pre>`;
+        } else {
+          resultDiv.innerHTML = "<p>No matching ID found.</p>";
+        }
+      })
+      .catch(err => console.error(err));
+  });
+</script>
+
+</body>
+</html>
